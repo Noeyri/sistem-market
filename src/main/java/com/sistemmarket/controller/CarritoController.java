@@ -34,8 +34,15 @@ public class CarritoController extends HttpServlet {
                 resp.sendRedirect(req.getContextPath() + "/carrito");
                 break;
             case "finalizar":
-                carritoService.finalizarCompra(usuario.getId());
-                resp.sendRedirect(req.getContextPath() + "/carrito?mensaje=compra_finalizada");
+                try {
+                    carritoService.finalizarCompra(usuario.getId());
+                    resp.sendRedirect(req.getContextPath() + "/carrito?mensaje=compra_finalizada");
+                } catch (IllegalStateException e) {
+                    req.setAttribute("error", e.getMessage());
+                    Carrito carrito = carritoService.obtenerCarrito(usuario.getId());
+                    req.setAttribute("carrito", carrito);
+                    req.getRequestDispatcher("/WEB-INF/views/carrito.jsp").forward(req, resp);
+                }
                 break;
             default:
                 Carrito carrito = carritoService.obtenerCarrito(usuario.getId());

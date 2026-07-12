@@ -101,4 +101,19 @@ public class ProductoDAO {
         p.setStock(rs.getInt("stock"));
         return p;
     }
+    
+    /**
+    * Descuenta stock de forma segura: solo resta si hay stock suficiente.
+    * Devuelve true si se pudo descontar, false si no habia stock suficiente.
+    */
+   public boolean descontarStock(Connection con, int productoId, int cantidad) throws SQLException {
+       String sql = "UPDATE productos SET stock = stock - ? WHERE id = ? AND stock >= ?";
+       try (PreparedStatement ps = con.prepareStatement(sql)) {
+           ps.setInt(1, cantidad);
+           ps.setInt(2, productoId);
+           ps.setInt(3, cantidad);
+           int filasAfectadas = ps.executeUpdate();
+           return filasAfectadas > 0;
+       }
+   }
 }

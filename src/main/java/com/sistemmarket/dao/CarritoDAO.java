@@ -130,4 +130,12 @@ public class CarritoDAO {
             throw new RuntimeException("Error al finalizar el carrito", e);
         }
     }
+    
+    public void finalizarCarrito(Connection con, int carritoId) throws SQLException {
+        String sql = "UPDATE carrito SET estado = 'FINALIZADO' WHERE id = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, carritoId);
+            ps.executeUpdate();
+        }
+    }
 }
