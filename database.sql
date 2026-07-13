@@ -28,6 +28,19 @@ CREATE TABLE productos (
     stock INT NOT NULL DEFAULT 0
 );
 
+ALTER TABLE productos
+    ADD COLUMN categoria VARCHAR(30) NOT NULL DEFAULT 'abarrotes'
+    AFTER descripcion;
+
+-- Clasifica los productos de prueba que ya tienes
+UPDATE productos SET categoria = 'abarrotes' WHERE nombre IN
+    ('Arroz Extra 1kg', 'Aceite Vegetal 1L', 'Azucar Rubia 1kg', 'Fideos Spaghetti 500g',
+     'Atun en Lata', 'Cafe Instantaneo 100g', 'Galletas Soda x6');
+UPDATE productos SET categoria = 'lacteos' WHERE nombre IN
+    ('Leche Evaporada', 'Yogurt Natural 1L');
+UPDATE productos SET categoria = 'limpieza' WHERE nombre IN
+    ('Detergente 1kg', 'Papel Higienico x4', 'Jabon de Tocador');
+
 -- =====================================================
 -- Tabla: carrito
 -- =====================================================

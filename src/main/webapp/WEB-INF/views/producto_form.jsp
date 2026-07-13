@@ -23,9 +23,19 @@
 
                 <label>Descripcion</label>
                 <textarea name="descripcion" rows="3" maxlength="500">${producto.descripcion}</textarea>
-
+                
+                <label class="campo-requerido">Categoria</label>
+                <select name="categoria" required>
+                    <c:forEach var="cat" items="['abarrotes','lacteos','limpieza','bebidas']">
+                    </c:forEach>
+                    <option value="abarrotes" ${producto.categoria == 'abarrotes' ? 'selected' : ''}>Abarrotes</option>
+                    <option value="lacteos" ${producto.categoria == 'lacteos' ? 'selected' : ''}>Lacteos</option>
+                    <option value="limpieza" ${producto.categoria == 'limpieza' ? 'selected' : ''}>Limpieza</option>
+                    <option value="bebidas" ${producto.categoria == 'bebidas' ? 'selected' : ''}>Bebidas</option>
+                </select>
+                
                 <label class="campo-requerido">Precio</label>
-                <input type="number" step="0.01" min="0.01" name="precio" value="${producto.precio}" required>
+                <input type="number" step="0.01" min="0.01" max="99999999.99" name="precio" value="${producto.precio}" required>
 
                 <label class="campo-requerido">Stock</label>
                 <input type="number" min="0" name="stock" value="${producto.stock}" required>

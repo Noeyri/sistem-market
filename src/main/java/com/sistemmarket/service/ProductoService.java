@@ -29,4 +29,8 @@ public class ProductoService {
     public void eliminar(int id) {
         productoDAO.eliminar(id);
     }
+
+    public List<Producto> listarPorCategoria(String categoria) {
+        return productoDAO.listarPorCategoria(categoria);
+    }
 }

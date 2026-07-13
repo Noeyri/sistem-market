@@ -19,7 +19,9 @@ public class ProductoController extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         String accion = req.getParameter("accion");
-        if (accion == null) accion = "listar";
+        if (accion == null) {
+            accion = "listar";
+        }
 
         switch (accion) {
             case "nuevo":
@@ -49,16 +51,44 @@ public class ProductoController extends HttpServlet {
         String idParam = req.getParameter("id");
         String nombre = req.getParameter("nombre");
         String descripcion = req.getParameter("descripcion");
-        BigDecimal precio = new BigDecimal(req.getParameter("precio"));
-        int stock = Integer.parseInt(req.getParameter("stock"));
+        String categoria = req.getParameter("categoria");
+        String stockParam = req.getParameter("stock");
+        String precioParam = req.getParameter("precio");
+
+        BigDecimal precio;
+        int stock;
+        try {
+            precio = new BigDecimal(precioParam);
+            stock = Integer.parseInt(stockParam);
+        } catch (NumberFormatException e) {
+            FlashMessage.error(req, "El precio o el stock ingresado no es un numero valido.");
+            resp.sendRedirect(req.getContextPath() + "/productos");
+            return;
+        }
+
+        if (precio.compareTo(BigDecimal.ZERO) <= 0) {
+            FlashMessage.error(req, "El precio debe ser mayor a cero.");
+            resp.sendRedirect(req.getContextPath() + "/productos");
+            return;
+        }
+        if (precio.compareTo(new BigDecimal("99999999.99")) > 0) {
+            FlashMessage.error(req, "El precio ingresado es demasiado alto (maximo S/ 99,999,999.99).");
+            resp.sendRedirect(req.getContextPath() + "/productos");
+            return;
+        }
+        if (stock < 0) {
+            FlashMessage.error(req, "El stock no puede ser negativo.");
+            resp.sendRedirect(req.getContextPath() + "/productos");
+            return;
+        }
 
         Producto producto = new Producto();
         producto.setNombre(nombre);
         producto.setDescripcion(descripcion);
+        producto.setCategoria(categoria);
         producto.setPrecio(precio);
         producto.setStock(stock);
 
-        // al final de doPost, antes del redirect:
         if (idParam != null && !idParam.isEmpty()) {
             producto.setId(Integer.parseInt(idParam));
             productoService.actualizar(producto);

@@ -10,9 +10,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * Catalogo de productos para el USUARIO (solo lectura + boton "Agregar al carrito").
- * Distinto de ProductoController, que es el CRUD exclusivo del ADMIN.
+/*
+   Catalogo de productos para el USUARIO (solo lectura + boton "Agregar al carrito").
+   Distinto de ProductoController, que es el CRUD exclusivo del ADMIN.
  */
 public class CatalogoController extends HttpServlet {
 
@@ -21,8 +21,14 @@ public class CatalogoController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        List<Producto> productos = productoService.listarTodos();
+        String categoria = req.getParameter("categoria");
+
+        List<Producto> productos = (categoria != null && !categoria.isEmpty())
+                ? productoService.listarPorCategoria(categoria)
+                : productoService.listarTodos();
+
         req.setAttribute("productos", productos);
+        req.setAttribute("categoriaActiva", categoria);
         req.getRequestDispatcher("/WEB-INF/views/catalogo.jsp").forward(req, resp);
     }
 }

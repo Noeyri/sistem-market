@@ -8,6 +8,7 @@ public class Producto {
     private String descripcion;
     private BigDecimal precio;
     private int stock;
+    private String categoria;
 
     public Producto() {}
 
@@ -33,4 +34,7 @@ public class Producto {
 
     public int getStock() { return stock; }
     public void setStock(int stock) { this.stock = stock; }
+    
+    public String getCategoria() { return categoria; }
+    public void setCategoria(String categoria) { this.categoria = categoria; }
 }
