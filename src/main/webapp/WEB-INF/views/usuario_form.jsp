@@ -11,7 +11,7 @@
     <body>
         <%@ include file="_header.jsp" %>
         <div class="contenedor">
-            <div class="card" style="max-width:500px;">
+            <div class="card card-formulario">
                 <h2>
                     <c:choose>
                         <c:when test="${not empty usuarioEditar}">Editar Usuario</c:when>

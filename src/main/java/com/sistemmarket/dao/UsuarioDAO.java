@@ -116,4 +116,30 @@ public class UsuarioDAO {
         u.setRol(rs.getString("rol"));
         return u;
     }
+    
+    public int contarTotal() {
+        String sql = "SELECT COUNT(*) FROM usuarios";
+        try (Connection con = ConexionBD.getConnection();
+             Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+            if (rs.next()) return rs.getInt(1);
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al contar usuarios", e);
+        }
+        return 0;
+    }
+    
+    public int contarPorRol(String rol) {
+        String sql = "SELECT COUNT(*) FROM usuarios WHERE rol = ?";
+        try (Connection con = ConexionBD.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, rol);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al contar usuarios por rol", e);
+        }
+        return 0;
+    }
 }

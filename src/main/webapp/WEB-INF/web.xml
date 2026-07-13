@@ -22,6 +22,9 @@
         <url-pattern>/usuarios</url-pattern>
         <url-pattern>/carrito</url-pattern>
         <url-pattern>/catalogo</url-pattern>
+        <url-pattern>/pedidos</url-pattern>
+        <url-pattern>/ConfirmarCompraServlet</url-pattern>
+        <url-pattern>/ActualizarPedidoServlet</url-pattern>
         <url-pattern>/logout</url-pattern>
     </filter-mapping>
 
@@ -33,6 +36,7 @@
         <filter-name>AdminFilter</filter-name>
         <url-pattern>/productos</url-pattern>
         <url-pattern>/usuarios</url-pattern>
+        <url-pattern>/ActualizarPedidoServlet</url-pattern>
     </filter-mapping>
 
     <!-- ===================== SERVLETS ===================== -->
@@ -98,7 +102,36 @@
         <servlet-name>CatalogoController</servlet-name>
         <url-pattern>/catalogo</url-pattern>
     </servlet-mapping>
+    
+    <servlet>
+        <servlet-name>PedidoController</servlet-name>
+        <servlet-class>com.sistemmarket.controller.PedidoController</servlet-class>
+    </servlet>
+    <servlet-mapping>   
+        <servlet-name>PedidoController</servlet-name>
+        <url-pattern>/pedidos</url-pattern>
+    </servlet-mapping>
+    
+    <!-- ConfirmarCompraServlet: cualquier usuario logueado -->
+    <servlet>
+        <servlet-name>ConfirmarCompraServlet</servlet-name>
+        <servlet-class>com.sistemmarket.controller.ConfirmarCompraServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ConfirmarCompraServlet</servlet-name>
+        <url-pattern>/ConfirmarCompraServlet</url-pattern>
+    </servlet-mapping>
 
+    <!-- ActualizarPedidoServlet: solo ADMIN -->
+    <servlet>
+        <servlet-name>ActualizarPedidoServlet</servlet-name>
+        <servlet-class>com.sistemmarket.controller.ActualizarPedidoServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ActualizarPedidoServlet</servlet-name>
+        <url-pattern>/ActualizarPedidoServlet</url-pattern>
+    </servlet-mapping>
+    
     <session-config>
         <session-timeout>30</session-timeout>
     </session-config>

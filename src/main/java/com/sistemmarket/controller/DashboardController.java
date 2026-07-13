@@ -1,8 +1,9 @@
 package com.sistemmarket.controller;
 
-import com.sistemmarket.model.Producto;
+import com.sistemmarket.dto.EstadisticasAdminDTO;
+import com.sistemmarket.dto.EstadisticasUsuarioDTO;
 import com.sistemmarket.model.Usuario;
-import com.sistemmarket.service.ProductoService;
+import com.sistemmarket.service.EstadisticasService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,11 +11,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
-import java.util.List;
 
 public class DashboardController extends HttpServlet {
 
-    private final ProductoService productoService = new ProductoService();
+    private final EstadisticasService estadisticasService = new EstadisticasService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -23,8 +23,11 @@ public class DashboardController extends HttpServlet {
         Usuario usuario = (Usuario) session.getAttribute("usuario");
 
         if (usuario.isAdmin()) {
-            List<Producto> productos = productoService.listarTodos();
-            req.setAttribute("totalProductos", productos.size());
+            EstadisticasAdminDTO estadisticas = estadisticasService.obtenerEstadisticasAdmin();
+            req.setAttribute("estadisticas", estadisticas);
+        } else {
+            EstadisticasUsuarioDTO estadisticas = estadisticasService.obtenerEstadisticasUsuario(usuario.getId());
+            req.setAttribute("estadisticas", estadisticas);
         }
 
         req.getRequestDispatcher("/WEB-INF/views/dashboard.jsp").forward(req, resp);

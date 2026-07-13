@@ -3,6 +3,7 @@ package com.sistemmarket.controller;
 import com.sistemmarket.model.Carrito;
 import com.sistemmarket.model.Usuario;
 import com.sistemmarket.service.CarritoService;
+import com.sistemmarket.util.FlashMessage;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,23 +28,26 @@ public class CarritoController extends HttpServlet {
             case "eliminar":
                 int detalleId = Integer.parseInt(req.getParameter("id"));
                 carritoService.eliminarDetalle(detalleId);
+                FlashMessage.success(req, "Producto quitado del carrito.");
                 resp.sendRedirect(req.getContextPath() + "/carrito");
                 break;
+
             case "vaciar":
                 carritoService.vaciarCarrito(usuario.getId());
+                FlashMessage.success(req, "Carrito vaciado correctamente.");
                 resp.sendRedirect(req.getContextPath() + "/carrito");
                 break;
+
             case "finalizar":
                 try {
                     carritoService.finalizarCompra(usuario.getId());
-                    resp.sendRedirect(req.getContextPath() + "/carrito?mensaje=compra_finalizada");
+                    FlashMessage.success(req, "Compra finalizada con exito. Gracias por tu pedido.");
                 } catch (IllegalStateException e) {
-                    req.setAttribute("error", e.getMessage());
-                    Carrito carrito = carritoService.obtenerCarrito(usuario.getId());
-                    req.setAttribute("carrito", carrito);
-                    req.getRequestDispatcher("/WEB-INF/views/carrito.jsp").forward(req, resp);
+                    FlashMessage.error(req, e.getMessage());
                 }
+                resp.sendRedirect(req.getContextPath() + "/carrito");
                 break;
+
             default:
                 Carrito carrito = carritoService.obtenerCarrito(usuario.getId());
                 req.setAttribute("carrito", carrito);
@@ -62,10 +66,10 @@ public class CarritoController extends HttpServlet {
 
         try {
             carritoService.agregarProducto(usuario.getId(), productoId, cantidad);
+            FlashMessage.success(req, "Producto agregado al carrito.");
         } catch (IllegalArgumentException e) {
-            req.setAttribute("error", e.getMessage());
+            FlashMessage.error(req, e.getMessage());
         }
-        // Vuelve al catalogo (de donde vino la peticion), no al carrito
         resp.sendRedirect(req.getContextPath() + "/catalogo");
     }
 }

@@ -1,14 +1,17 @@
 package com.sistemmarket.dao;
 
+import com.sistemmarket.dto.ProductoVendidoDTO;
 import com.sistemmarket.model.Carrito;
 import com.sistemmarket.model.DetalleCarrito;
 import com.sistemmarket.util.ConexionBD;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CarritoDAO {
 
-    /* Obtiene el carrito ACTIVO del usuario, o lo crea si no existe. */
+    // Obtiene el carrito ACTIVO del usuario, o lo crea si no existe.
     public Carrito obtenerOCrearCarritoActivo(int usuarioId) {
         String sqlBuscar = "SELECT * FROM carrito WHERE usuario_id = ? AND estado = 'ACTIVO'";
         try (Connection con = ConexionBD.getConnection();
@@ -137,5 +140,246 @@ public class CarritoDAO {
             ps.setInt(1, carritoId);
             ps.executeUpdate();
         }
+    }
+    
+    //Pedidos (carritos finalizados) de un usuario especifico.
+    public List<Carrito> listarPorUsuario(int usuarioId) {
+        List<Carrito> lista = new ArrayList<>();
+        String sql = "SELECT * FROM carrito WHERE usuario_id = ? AND estado = 'FINALIZADO' ORDER BY fecha_creacion DESC";
+        try (Connection con = ConexionBD.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, usuarioId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Carrito c = new Carrito();
+                    c.setId(rs.getInt("id"));
+                    c.setUsuarioId(rs.getInt("usuario_id"));
+                    c.setEstado(rs.getString("estado"));
+                    c.setEstadoPedido(rs.getString("estado_pedido"));
+                    c.setFechaCreacion(rs.getTimestamp("fecha_creacion"));
+                    c.setDetalles(listarDetalles(con, c.getId()));
+                    lista.add(c);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al listar pedidos del usuario", e);
+        }
+        return lista;
+    }
+
+    //Todos los pedidos (de todos los clientes) - solo para ADMIN.
+    public List<Carrito> listarTodosFinalizados() {
+        List<Carrito> lista = new ArrayList<>();
+        String sql = "SELECT c.*, u.nombre AS usuario_nombre FROM carrito c " +
+                "JOIN usuarios u ON c.usuario_id = u.id " +
+                "WHERE c.estado = 'FINALIZADO' ORDER BY c.fecha_creacion DESC";
+        try (Connection con = ConexionBD.getConnection();
+             Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+            while (rs.next()) {
+                Carrito c = new Carrito();
+                c.setId(rs.getInt("id"));
+                c.setUsuarioId(rs.getInt("usuario_id"));
+                c.setEstado(rs.getString("estado"));
+                c.setEstadoPedido(rs.getString("estado_pedido"));
+                c.setFechaCreacion(rs.getTimestamp("fecha_creacion"));
+                c.setUsuarioNombre(rs.getString("usuario_nombre"));
+                c.setDetalles(listarDetalles(con, c.getId()));
+                lista.add(c);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al listar todos los pedidos", e);
+        }
+        return lista;
+    }
+    
+    //Cambia el estado de gestion de un pedido (PENDIENTE, PROCESANDO, ENTREGADO).
+    public void actualizarEstadoPedido(int carritoId, String nuevoEstado) {
+       String sql = "UPDATE carrito SET estado_pedido = ? WHERE id = ?";
+       try (Connection con = ConexionBD.getConnection();
+            PreparedStatement ps = con.prepareStatement(sql)) {
+           ps.setString(1, nuevoEstado);
+           ps.setInt(2, carritoId);
+           ps.executeUpdate();
+       } catch (SQLException e) {
+           throw new RuntimeException("Error al actualizar estado del pedido", e);
+       }
+   }
+
+   // Trae un pedido por su id, incluyendo el usuario_id (para validar propiedad).
+   public Carrito buscarPorId(int carritoId) {
+       String sql = "SELECT * FROM carrito WHERE id = ?";
+       try (Connection con = ConexionBD.getConnection();
+            PreparedStatement ps = con.prepareStatement(sql)) {
+           ps.setInt(1, carritoId);
+           try (ResultSet rs = ps.executeQuery()) {
+               if (rs.next()) {
+                   Carrito c = new Carrito();
+                   c.setId(rs.getInt("id"));
+                   c.setUsuarioId(rs.getInt("usuario_id"));
+                   c.setEstado(rs.getString("estado"));
+                   c.setEstadoPedido(rs.getString("estado_pedido"));
+                   return c;
+               }
+           }
+       } catch (SQLException e) {
+           throw new RuntimeException("Error al buscar pedido", e);
+       }
+       return null;
+   }
+   
+   public int contarFinalizados() {
+        String sql = "SELECT COUNT(*) FROM carrito WHERE estado = 'FINALIZADO'";
+        try (Connection con = ConexionBD.getConnection();
+             Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+            if (rs.next()) return rs.getInt(1);
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al contar pedidos", e);
+        }
+        return 0;
+    }
+
+    public int contarPorUsuario(int usuarioId) {
+        String sql = "SELECT COUNT(*) FROM carrito WHERE usuario_id = ? AND estado = 'FINALIZADO'";
+        try (Connection con = ConexionBD.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, usuarioId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al contar pedidos del usuario", e);
+        }
+        return 0;
+    }
+
+    //Ultimos N pedidos de TODOS los clientes (para el resumen del admin).
+    public List<Carrito> listarRecientes(int limite) {
+        List<Carrito> lista = new ArrayList<>();
+        String sql = "SELECT c.*, u.nombre AS usuario_nombre FROM carrito c " +
+                "JOIN usuarios u ON c.usuario_id = u.id " +
+                "WHERE c.estado = 'FINALIZADO' ORDER BY c.fecha_creacion DESC LIMIT ?";
+        try (Connection con = ConexionBD.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, limite);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Carrito c = new Carrito();
+                    c.setId(rs.getInt("id"));
+                    c.setUsuarioId(rs.getInt("usuario_id"));
+                    c.setEstado(rs.getString("estado"));
+                    c.setEstadoPedido(rs.getString("estado_pedido"));
+                    c.setFechaCreacion(rs.getTimestamp("fecha_creacion"));
+                    c.setUsuarioNombre(rs.getString("usuario_nombre"));
+                    c.setDetalles(listarDetalles(con, c.getId()));
+                    lista.add(c);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al listar pedidos recientes", e);
+        }
+        return lista;
+    }
+
+    //Top N productos con mas unidades vendidas (solo pedidos FINALIZADO).
+    public List<ProductoVendidoDTO> listarTopProductosVendidos(int limite) {
+        List<ProductoVendidoDTO> lista = new ArrayList<>();
+        String sql = "SELECT p.nombre AS nombre, SUM(dc.cantidad) AS total_vendido " +
+                "FROM detalle_carrito dc " +
+                "JOIN carrito c ON dc.carrito_id = c.id " +
+                "JOIN productos p ON dc.producto_id = p.id " +
+                "WHERE c.estado = 'FINALIZADO' " +
+                "GROUP BY p.id, p.nombre " +
+                "ORDER BY total_vendido DESC LIMIT ?";
+        try (Connection con = ConexionBD.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, limite);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(new ProductoVendidoDTO(rs.getString("nombre"), rs.getInt("total_vendido")));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al listar top productos vendidos", e);
+        }
+        return lista;
+    }
+
+    //Ultimos N pedidos de UN usuario especifico (para su propio dashboard).
+    public List<Carrito> listarUltimosPedidosUsuario(int usuarioId, int limite) {
+        List<Carrito> lista = new ArrayList<>();
+        String sql = "SELECT * FROM carrito WHERE usuario_id = ? AND estado = 'FINALIZADO' " +
+                "ORDER BY fecha_creacion DESC LIMIT ?";
+        try (Connection con = ConexionBD.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, usuarioId);
+            ps.setInt(2, limite);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Carrito c = new Carrito();
+                    c.setId(rs.getInt("id"));
+                    c.setUsuarioId(rs.getInt("usuario_id"));
+                    c.setEstado(rs.getString("estado"));
+                    c.setEstadoPedido(rs.getString("estado_pedido"));
+                    c.setFechaCreacion(rs.getTimestamp("fecha_creacion"));
+                    c.setDetalles(listarDetalles(con, c.getId()));
+                    lista.add(c);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al listar ultimos pedidos del usuario", e);
+        }
+        return lista;
+    }
+
+    //Suma de lo gastado por un usuario en todos sus pedidos FINALIZADO.
+    public java.math.BigDecimal calcularTotalGastadoUsuario(int usuarioId) {
+        String sql = "SELECT COALESCE(SUM(dc.precio_unitario * dc.cantidad), 0) AS total " +
+                "FROM detalle_carrito dc " +
+                "JOIN carrito c ON dc.carrito_id = c.id " +
+                "WHERE c.usuario_id = ? AND c.estado = 'FINALIZADO'";
+        try (Connection con = ConexionBD.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, usuarioId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getBigDecimal("total");
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al calcular total gastado", e);
+        }
+        return java.math.BigDecimal.ZERO;
+    }
+    
+    public int contarPorUsuarioMesActual(int usuarioId) {
+        String sql = "SELECT COUNT(*) FROM carrito WHERE usuario_id = ? AND estado = 'FINALIZADO' " +
+                "AND MONTH(fecha_creacion) = MONTH(CURDATE()) AND YEAR(fecha_creacion) = YEAR(CURDATE())";
+        try (Connection con = ConexionBD.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, usuarioId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al contar pedidos del mes", e);
+        }
+        return 0;
+    }
+
+    public java.math.BigDecimal calcularGastoUsuarioMesActual(int usuarioId) {
+        String sql = "SELECT COALESCE(SUM(dc.precio_unitario * dc.cantidad), 0) AS total " +
+                "FROM detalle_carrito dc JOIN carrito c ON dc.carrito_id = c.id " +
+                "WHERE c.usuario_id = ? AND c.estado = 'FINALIZADO' " +
+                "AND MONTH(c.fecha_creacion) = MONTH(CURDATE()) AND YEAR(c.fecha_creacion) = YEAR(CURDATE())";
+        try (Connection con = ConexionBD.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, usuarioId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getBigDecimal("total");
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al calcular gasto del mes", e);
+        }
+        return java.math.BigDecimal.ZERO;
     }
 }

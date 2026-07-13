@@ -12,7 +12,7 @@
     <body>
         <%@ include file="_header.jsp" %>
 
-        <div class="card" style="max-width:500px;">
+        <div class="card card-formulario">
             <h2><c:choose><c:when test="${not empty producto}">Editar Producto</c:when><c:otherwise>Nuevo Producto</c:otherwise></c:choose></h2>
 
                         <form method="post" action="${pageContext.request.contextPath}/productos">

@@ -102,7 +102,7 @@ public class ProductoDAO {
         return p;
     }
     
-    /**
+    /*
     * Descuenta stock de forma segura: solo resta si hay stock suficiente.
     * Devuelve true si se pudo descontar, false si no habia stock suficiente.
     */
@@ -116,4 +116,30 @@ public class ProductoDAO {
            return filasAfectadas > 0;
        }
    }
+   
+   public int contarTotal() {
+    String sql = "SELECT COUNT(*) FROM productos";
+    try (Connection con = ConexionBD.getConnection();
+         Statement st = con.createStatement();
+         ResultSet rs = st.executeQuery(sql)) {
+        if (rs.next()) return rs.getInt(1);
+    } catch (SQLException e) {
+        throw new RuntimeException("Error al contar productos", e);
+    }
+    return 0;
+}
+
+    public int contarStockBajo(int umbral) {
+        String sql = "SELECT COUNT(*) FROM productos WHERE stock < ?";
+        try (Connection con = ConexionBD.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, umbral);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al contar stock bajo", e);
+        }
+        return 0;
+    }
 }

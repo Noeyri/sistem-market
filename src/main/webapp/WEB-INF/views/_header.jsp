@@ -8,12 +8,19 @@
         <c:if test="${usuario.rol == 'ADMIN'}">
             <a href="${pageContext.request.contextPath}/productos">Productos</a>
             <a href="${pageContext.request.contextPath}/usuarios">Usuarios</a>
+            <a href="${pageContext.request.contextPath}/pedidos">Pedidos</a>
         </c:if>
         <c:if test="${usuario.rol == 'USUARIO'}">
             <a href="${pageContext.request.contextPath}/catalogo">Productos</a>
             <a href="${pageContext.request.contextPath}/carrito">Carrito</a>
+            <a href="${pageContext.request.contextPath}/pedidos">Mis Pedidos</a>
         </c:if>
-        <a href="${pageContext.request.contextPath}/logout">Salir (${usuario.nombre})</a>
+        <div class="dropdown">
+            <span class="dropdown-trigger">${usuario.nombre} <span class="flecha">&#9662;</span></span>
+            <div class="dropdown-menu">
+                <a href="${pageContext.request.contextPath}/logout">Cerrar Sesion</a>
+            </div>
+        </div>
     </nav>
 </header>
 
@@ -34,4 +41,3 @@
         </div>
         <c:remove var="flashError" scope="session"/>
     </c:if>
-</div>

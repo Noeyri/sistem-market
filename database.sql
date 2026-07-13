@@ -39,6 +39,13 @@ CREATE TABLE carrito (
     CONSTRAINT fk_carrito_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 );
 
+ALTER TABLE carrito
+    ADD COLUMN estado_pedido ENUM('PENDIENTE', 'PROCESANDO', 'ENTREGADO')
+    NOT NULL DEFAULT 'PENDIENTE'
+    AFTER estado;
+
+-- Opcional: deja los pedidos ya existentes como PENDIENTE (valor por defecto ya los cubre)
+
 -- =====================================================
 -- Tabla: detalle_carrito
 -- =====================================================
