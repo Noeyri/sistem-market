@@ -9,64 +9,82 @@ Proyecto Java Jakarta EE (Servlet + JSP + JSTL) con patron MVC, DAO y Service.
 - Un servidor de aplicaciones compatible con Jakarta EE 10 (Tomcat 10.1+, Wildfly 27+, etc.)
   **Importante:** Tomcat 9 o inferior usa el paquete `javax.*` y NO es compatible. Se necesita Tomcat 10.1+.
 
-## Pasos para ejecutar
-
-### 1. Crear la base de datos
-Ejecuta el script `database.sql` en tu servidor MySQL:
-
-```bash
-mysql -u root -p < database.sql
-```
-
-Esto crea la base `sistem_market`, sus tablas, y los usuarios de prueba:
-- **admin / 123456** (rol ADMIN)
-- **user / 123456** (rol USUARIO)
-
-### 2. Configurar la conexion a MySQL
-Edita `src/main/java/com/sistemmarket/util/ConexionBD.java` y ajusta usuario/password de tu MySQL local:
-
-```java
-private static final String USUARIO = "root";
-private static final String PASSWORD = "root";
-```
-
-### 3. Compilar el proyecto
-
-```bash
-mvn clean package
-```
-
-Esto genera `target/sistem-market.war`.
-
-### 4. Desplegar
-Copia `target/sistem-market.war` a la carpeta `webapps` de Tomcat 10.1+, o despliega desde tu IDE (IntelliJ/Eclipse) usando un servidor Jakarta EE 10.
-
-### 5. Acceder
-```
-http://localhost:8080/sistem-market/
-```
+## Crear la base de datos
+Ejecuta el script `database.sql` en MySQL:
 
 ## Estructura del proyecto
 
 ```
 sistem-market/
-├── pom.xml
-├── database.sql
-└── src/main/
-    ├── java/com/sistemmarket/
-    │   ├── model/        -> Usuario, Producto, Carrito, DetalleCarrito
-    │   ├── dao/           -> UsuarioDAO, ProductoDAO, CarritoDAO
-    │   ├── service/       -> UsuarioService, ProductoService, CarritoService
-    │   ├── controller/    -> Servlets (Login, Logout, Dashboard, Producto, Usuario, Carrito)
-    │   ├── filter/        -> AuthFilter (sesion), AdminFilter (rol ADMIN)
-    │   └── util/          -> ConexionBD, PasswordUtil (BCrypt)
-    └── webapp/
-        ├── index.jsp
-        └── WEB-INF/
-            ├── web.xml
-            └── views/     -> login.jsp, dashboard.jsp, productos.jsp,
-                               producto_form.jsp, usuarios.jsp, usuario_form.jsp,
-                               carrito.jsp, _header.jspf
+│
+├── pom.xml                        ← Configuración Maven (Jakarta EE 10, MySQL, BCrypt)
+├── database.sql                   ← Script de creación y datos de prueba
+│
+├── src/main/java/com/sistemmarket/
+│   │
+│   ├── model/                     ← Entidades del dominio (POJO)
+│   │   ├── Usuario.java
+│   │   ├── Producto.java
+│   │   ├── Carrito.java
+│   │   └── DetalleCarrito.java
+│   │
+│   ├── dto/                       ← Objetos de transferencia (solo lectura agregada)
+│   │   ├── EstadisticasAdminDTO.java
+│   │   ├── EstadisticasUsuarioDTO.java
+│   │   └── ProductoVendidoDTO.java
+│   │
+│   ├── dao/                       ← Acceso a datos (JDBC + PreparedStatement)
+│   │   ├── DAOFactory.java        ← Factory Method: entrega instancias de los DAO
+│   │   ├── UsuarioDAO.java
+│   │   ├── ProductoDAO.java
+│   │   └── CarritoDAO.java
+│   │
+│   ├── service/                   ← Lógica de negocio, validaciones y transacciones
+│   │   ├── UsuarioService.java
+│   │   ├── ProductoService.java
+│   │   ├── CarritoService.java
+│   │   ├── PedidoService.java
+│   │   └── EstadisticasService.java
+│   │
+│   ├── controller/                ← Servlets (un servlet por recurso/acción)
+│   │   ├── LoginController.java
+│   │   ├── LogoutController.java
+│   │   ├── DashboardController.java
+│   │   ├── ProductoController.java
+│   │   ├── UsuarioController.java
+│   │   ├── CatalogoController.java
+│   │   ├── CarritoController.java
+│   │   ├── PedidoController.java
+│   │   ├── ConfirmarCompraServlet.java
+│   │   └── ActualizarPedidoServlet.java
+│   │
+│   ├── filter/                    ← Seguridad transversal
+│   │   ├── AuthFilter.java        ← Exige sesión activa
+│   │   └── AdminFilter.java       ← Exige rol ADMIN
+│   │
+│   └── util/
+│       ├── ConexionBD.java        ← Fabrica conexiones JDBC (parametros centralizados)
+│       ├── PasswordUtil.java      ← Hash y verificacion BCrypt
+│       └── FlashMessage.java      ← Mensajes de exito/error de un solo uso via sesion
+│
+└── src/main/webapp/
+    ├── index.jsp                  ← Redirige a /login
+    ├── css/
+    │   ├── styles.css             ← Estilos base (paleta, tipografia, componentes)
+    │   └── dashboard.css          ← Estilos especificos del panel de estadisticas
+    │
+    └── WEB-INF/
+        ├── web.xml                ← Mapeo de servlets y filtros
+        └── views/
+            ├── _header.jsp        ← Cabecera + navegacion + dropdown + mensajes flash
+            ├── _footer.jsp        ← Pie de pagina
+            ├── login.jsp
+            ├── dashboard.jsp      ← Vista condicional segun rol (KPIs + graficos)
+            ├── productos.jsp / producto_form.jsp   ← CRUD admin
+            ├── usuarios.jsp / usuario_form.jsp     ← CRUD admin
+            ├── catalogo.jsp       ← Catalogo con busqueda y filtro de categoria
+            ├── carrito.jsp        ← Carrito con empty state
+            └── pedidos.jsp        ← Historial de pedidos (vista dual admin/usuario)
 ```
 
 ## Funcionalidades
